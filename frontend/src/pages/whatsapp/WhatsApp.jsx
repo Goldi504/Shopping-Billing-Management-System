@@ -45,14 +45,10 @@ const getList = (data, keys) => {
   return [];
 };
 
-const getCustomerId = (customer) =>
-  String(customer?._id || customer?.id || "");
+const getCustomerId = (customer) => String(customer?._id || customer?.id || "");
 
 const getCustomerName = (customer) =>
-  customer?.name ||
-  customer?.fullName ||
-  customer?.customerName ||
-  "Customer";
+  customer?.name || customer?.fullName || customer?.customerName || "Customer";
 
 const getCustomerPhone = (customer) =>
   customer?.mobile ||
@@ -61,14 +57,10 @@ const getCustomerPhone = (customer) =>
   customer?.phoneNumber ||
   "";
 
-const getInvoiceId = (invoice) =>
-  String(invoice?._id || invoice?.id || "");
+const getInvoiceId = (invoice) => String(invoice?._id || invoice?.id || "");
 
 const getInvoiceNumber = (invoice) =>
-  invoice?.invoiceNumber ||
-  invoice?.invoiceNo ||
-  invoice?.number ||
-  "";
+  invoice?.invoiceNumber || invoice?.invoiceNo || invoice?.number || "";
 
 const getInvoiceTotal = (invoice) =>
   invoice?.totalAmount ??
@@ -93,21 +85,14 @@ const getInvoiceDate = (invoice) => {
   });
 };
 
-const getProductDetails = (invoice) =>
-  invoice?.productDetails || {};
+const getProductDetails = (invoice) => invoice?.productDetails || {};
 
 const getInvoiceCustomer = (invoice, selectedCustomer) => {
-  if (
-    invoice?.customerDetails &&
-    typeof invoice.customerDetails === "object"
-  ) {
+  if (invoice?.customerDetails && typeof invoice.customerDetails === "object") {
     return invoice.customerDetails;
   }
 
-  if (
-    invoice?.customerId &&
-    typeof invoice.customerId === "object"
-  ) {
+  if (invoice?.customerId && typeof invoice.customerId === "object") {
     return invoice.customerId;
   }
 
@@ -125,11 +110,7 @@ const getInvoiceCustomerId = (invoice) => {
 };
 
 const addMessageLine = (label, value) => {
-  if (
-    value === undefined ||
-    value === null ||
-    String(value).trim() === ""
-  ) {
+  if (value === undefined || value === null || String(value).trim() === "") {
     return "";
   }
 
@@ -149,18 +130,14 @@ function StatCard({ title, value, icon: Icon, tone, index }) {
       className="min-w-0 rounded-2xl border border-[#E6D9BD] bg-[#FFFEFA] p-4 shadow-sm transition-colors sm:p-5"
     >
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-medium text-[#746D5E]">
-          {title}
-        </p>
+        <p className="text-sm font-medium text-[#746D5E]">{title}</p>
 
         <div className={`rounded-xl p-2.5 ${tone}`}>
           <Icon size={20} />
         </div>
       </div>
 
-      <p className="mt-4 text-2xl font-bold text-[#171914]">
-        {value}
-      </p>
+      <p className="mt-4 text-2xl font-bold text-[#171914]">{value}</p>
     </motion.div>
   );
 }
@@ -184,11 +161,10 @@ function WhatsApp() {
     setNotice("");
 
     try {
-      const [customerResponse, invoiceResponse] =
-        await Promise.all([
-          api.get("/customers"),
-          api.get("/invoices"),
-        ]);
+      const [customerResponse, invoiceResponse] = await Promise.all([
+        api.get("/customers"),
+        api.get("/invoices"),
+      ]);
 
       const customerList = getList(customerResponse.data, [
         "customers",
@@ -206,26 +182,22 @@ function WhatsApp() {
       setInvoices(invoiceList);
 
       setCustomerId((current) =>
-        customerList.some(
-          (item) => getCustomerId(item) === current
-        )
+        customerList.some((item) => getCustomerId(item) === current)
           ? current
-          : getCustomerId(customerList[0])
+          : getCustomerId(customerList[0]),
       );
 
       setInvoiceId((current) =>
-        invoiceList.some(
-          (item) => getInvoiceId(item) === current
-        )
+        invoiceList.some((item) => getInvoiceId(item) === current)
           ? current
-          : getInvoiceId(invoiceList[0])
+          : getInvoiceId(invoiceList[0]),
       );
     } catch (err) {
       console.error("WhatsApp page data error:", err);
 
       setError(
         err.response?.data?.message ||
-          "Unable to load customers and invoices. Check your API routes and server."
+          "Unable to load customers and invoices. Check your API routes and server.",
       );
     } finally {
       setLoading(false);
@@ -238,29 +210,24 @@ function WhatsApp() {
 
   const selectedCustomer = useMemo(
     () =>
-      customers.find(
-        (customer) => getCustomerId(customer) === customerId
-      ) || null,
-    [customers, customerId]
+      customers.find((customer) => getCustomerId(customer) === customerId) ||
+      null,
+    [customers, customerId],
   );
 
   const selectedInvoice = useMemo(
     () =>
-      invoices.find(
-        (invoice) => getInvoiceId(invoice) === invoiceId
-      ) || null,
-    [invoices, invoiceId]
+      invoices.find((invoice) => getInvoiceId(invoice) === invoiceId) || null,
+    [invoices, invoiceId],
   );
 
   const filteredInvoices = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     return invoices.filter((invoice) => {
-      const invoiceNumber =
-        getInvoiceNumber(invoice).toLowerCase();
+      const invoiceNumber = getInvoiceNumber(invoice).toLowerCase();
 
-      const matchesSearch =
-        !query || invoiceNumber.includes(query);
+      const matchesSearch = !query || invoiceNumber.includes(query);
 
       const linkedCustomerId = getInvoiceCustomerId(invoice);
 
@@ -271,7 +238,7 @@ function WhatsApp() {
 
       return matchesSearch && matchesCustomer;
     });
-  }, [invoices, search, customerId]);  // ================================================
+  }, [invoices, search, customerId]); // ================================================
   // SELECT CUSTOMER
   // ================================================
 
@@ -306,18 +273,14 @@ function WhatsApp() {
 
     const invoiceCustomer = getInvoiceCustomer(
       selectedInvoice,
-      selectedCustomer
+      selectedCustomer,
     );
 
-    const invoiceNumber =
-      getInvoiceNumber(selectedInvoice) || "N/A";
+    const invoiceNumber = getInvoiceNumber(selectedInvoice) || "N/A";
 
-    const invoiceDate =
-      getInvoiceDate(selectedInvoice) || "N/A";
+    const invoiceDate = getInvoiceDate(selectedInvoice) || "N/A";
 
-    const invoiceTotal = formatMoney(
-      getInvoiceTotal(selectedInvoice)
-    );
+    const invoiceTotal = formatMoney(getInvoiceTotal(selectedInvoice));
 
     const product = getProductDetails(selectedInvoice);
 
@@ -336,9 +299,7 @@ function WhatsApp() {
       "";
 
     const lines = [
-      "Hello " +
-        getCustomerName(invoiceCustomer) +
-        ",",
+      "Hello " + getCustomerName(invoiceCustomer) + ",",
       "",
       "Thank you for shopping with Ganesh Mobile Shop!",
       "",
@@ -364,9 +325,7 @@ function WhatsApp() {
     const phone = getCustomerPhone(selectedCustomer);
 
     if (!phone) {
-      setError(
-        "This customer does not have a registered mobile number."
-      );
+      setError("This customer does not have a registered mobile number.");
       return null;
     }
 
@@ -375,16 +334,13 @@ function WhatsApp() {
     // Convert a standard Indian 10-digit number to country code format.
     if (number.length === 10) {
       number = `91${number}`;
-    } else if (
-      number.length === 11 &&
-      number.startsWith("0")
-    ) {
+    } else if (number.length === 11 && number.startsWith("0")) {
       number = `91${number.slice(1)}`;
     }
 
     if (number.length < 11 || number.length > 15) {
       setError(
-        "The customer's mobile number is invalid. Please check the saved number."
+        "The customer's mobile number is invalid. Please check the saved number.",
       );
       return null;
     }
@@ -416,17 +372,12 @@ function WhatsApp() {
 
     const text = encodeURIComponent(generatedMessage);
 
-    const whatsappUrl =
-      `https://wa.me/${number}?text=${text}`;
+    const whatsappUrl = `https://wa.me/${number}?text=${text}`;
 
-    window.open(
-      whatsappUrl,
-      "_blank",
-      "noopener,noreferrer"
-    );
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
 
     setNotice(
-      "WhatsApp opened with the invoice message. Review it and press Send in WhatsApp."
+      "WhatsApp opened with the invoice message. Review it and press Send in WhatsApp.",
     );
   };
 
@@ -439,23 +390,19 @@ function WhatsApp() {
     setNotice("");
 
     if (!selectedCustomer || !selectedInvoice) {
-      setError(
-        "Select a customer and invoice before copying the message."
-      );
+      setError("Select a customer and invoice before copying the message.");
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(
-        generatedMessage
-      );
+      await navigator.clipboard.writeText(generatedMessage);
 
       setNotice("Invoice message copied successfully.");
     } catch (err) {
       console.error("Copy message error:", err);
 
       setError(
-        "Unable to copy automatically. Please select and copy the message manually."
+        "Unable to copy automatically. Please select and copy the message manually.",
       );
     }
   };
@@ -471,29 +418,61 @@ function WhatsApp() {
     : "";
 
   const selectedInvoiceCustomer = selectedInvoice
-    ? getInvoiceCustomer(
-        selectedInvoice,
-        selectedCustomer
-      )
+    ? getInvoiceCustomer(selectedInvoice, selectedCustomer)
     : null;
-      // ================================================
+  const pageAnimation = {
+    hidden: {
+      opacity: 0,
+    },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+      },
+    },
+  };
+
+  const itemAnimation = {
+    hidden: {
+      opacity: 0,
+      y: 15,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.35,
+      },
+    },
+  };
+
+  const spring = {
+    type: "spring",
+    stiffness: 260,
+    damping: 22,
+  };
+  // ================================================
   // PAGE UI
   // ================================================
 
   return (
-<div
-  className="min-h-screen w-full text-[#171914]"
-  style={{ backgroundColor: "#F4F0E6" }}
->      <Sidebar />
-
-<main
-  className="min-h-screen px-4 py-6 sm:px-6 lg:ml-[250px] lg:px-8"
-  style={{ backgroundColor: "#F4F0E6" }}
->        <motion.div
+    <div
+      className="min-h-screen w-full text-[#171914]"
+      style={{ backgroundColor: "#F4F0E6" }}
+    >
+      {" "}
+      <Sidebar />
+      <main
+        className="min-h-screen px-4 py-6 sm:px-6 lg:ml-[250px] lg:px-8"
+        style={{ backgroundColor: "#F4F0E6" }}
+      >
+        {" "}
+        <motion.div
           variants={pageAnimation}
           initial="hidden"
           animate="visible"
-className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
+          className="mx-auto min-h-screen max-w-[1600px] space-y-6"
+        >
           {/* PAGE HEADER */}
 
           <motion.header
@@ -505,7 +484,6 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                 <div className="rounded-xl bg-green-100 p-2">
                   <MessageCircle size={19} />
                 </div>
-
                 Customer Communication
               </div>
 
@@ -530,11 +508,7 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
               transition={spring}
               className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-[#E6D9BD] bg-[#FFFEFA] px-4 py-3 text-sm font-semibold text-[#171914] shadow-sm transition hover:bg-[#FFF6D9] disabled:opacity-50 sm:self-auto"
             >
-              <RefreshCw
-                size={17}
-                className={loading ? "animate-spin" : ""}
-              />
-
+              <RefreshCw size={17} className={loading ? "animate-spin" : ""} />
               Refresh data
             </motion.button>
           </motion.header>
@@ -550,10 +524,7 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                 exit={{ opacity: 0, y: -8 }}
                 className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
               >
-                <AlertCircle
-                  size={19}
-                  className="mt-0.5 shrink-0"
-                />
+                <AlertCircle size={19} className="mt-0.5 shrink-0" />
 
                 <span className="flex-1">{error}</span>
 
@@ -576,10 +547,7 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                 exit={{ opacity: 0, y: -8 }}
                 className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800"
               >
-                <CheckCircle2
-                  size={19}
-                  className="mt-0.5 shrink-0"
-                />
+                <CheckCircle2 size={19} className="mt-0.5 shrink-0" />
 
                 <span className="flex-1">{notice}</span>
 
@@ -633,8 +601,7 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
           <motion.section
             variants={itemAnimation}
             whileHover={{
-              boxShadow:
-                "0 14px 32px rgba(184,134,11,0.06)",
+              boxShadow: "0 14px 32px rgba(184,134,11,0.06)",
             }}
             transition={spring}
             className="overflow-hidden rounded-2xl border border-[#E6D9BD] bg-[#FFFEFA] shadow-sm"
@@ -675,9 +642,7 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                     disabled={loading}
                     className="w-full appearance-none rounded-xl border border-[#E6D9BD] bg-[#FFFEFA] py-3 pl-11 pr-10 text-sm text-[#171914] outline-none transition focus:border-[#D4AF37] focus:ring-4 focus:ring-amber-100 disabled:opacity-50"
                   >
-                    <option value="">
-                      Select customer...
-                    </option>
+                    <option value="">Select customer...</option>
 
                     {customers.map((customer) => (
                       <option
@@ -718,25 +683,20 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                       className="mt-3 flex items-center gap-3 rounded-xl border border-transparent bg-[#F8F5ED] p-3 transition hover:border-[#E6D9BD]"
                     >
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#F9E6A5] font-bold text-[#171914]">
-                        {getCustomerName(
-                          selectedCustomer
-                        )
+                        {getCustomerName(selectedCustomer)
                           .charAt(0)
                           .toUpperCase()}
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-[#171914]">
-                          {getCustomerName(
-                            selectedCustomer
-                          )}
+                          {getCustomerName(selectedCustomer)}
                         </p>
 
                         <p className="mt-1 flex items-center gap-1.5 text-xs text-[#746D5E]">
                           <Smartphone size={13} />
 
-                          {selectedPhone ||
-                            "No phone number available"}
+                          {selectedPhone || "No phone number available"}
                         </p>
                       </div>
 
@@ -775,9 +735,7 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                     id="whatsapp-invoice-search"
                     type="text"
                     value={search}
-                    onChange={(event) =>
-                      setSearch(event.target.value)
-                    }
+                    onChange={(event) => setSearch(event.target.value)}
                     placeholder="Search invoice number..."
                     disabled={!customerId}
                     className="w-full rounded-xl border border-[#E6D9BD] bg-[#F9F6EE] py-3 pl-11 pr-4 text-sm text-[#171914] outline-none transition placeholder:text-[#948A76] focus:border-[#D4AF37] focus:bg-white focus:ring-4 focus:ring-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
@@ -789,19 +747,16 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                     const id = getInvoiceId(invoice);
                     const active = id === invoiceId;
 
-                    const invoiceCustomer =
-                      getInvoiceCustomer(
-                        invoice,
-                        selectedCustomer
-                      );
+                    const invoiceCustomer = getInvoiceCustomer(
+                      invoice,
+                      selectedCustomer,
+                    );
 
                     return (
                       <motion.button
                         key={id || getInvoiceNumber(invoice)}
                         type="button"
-                        onClick={() =>
-                          setInvoiceId(id)
-                        }
+                        onClick={() => setInvoiceId(id)}
                         whileHover={{
                           y: -2,
                           borderColor: GOLD_COLOR,
@@ -827,26 +782,20 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
 
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-bold text-[#171914]">
-                              {getInvoiceNumber(invoice) ||
-                                "Invoice"}
+                              {getInvoiceNumber(invoice) || "Invoice"}
                             </span>
 
                             <span className="mt-1 block truncate text-xs text-[#746D5E]">
-                              {getCustomerName(
-                                invoiceCustomer
-                              )}
+                              {getCustomerName(invoiceCustomer)}
                               {" · "}
-                              {getInvoiceDate(invoice) ||
-                                "Date unavailable"}
+                              {getInvoiceDate(invoice) || "Date unavailable"}
                             </span>
                           </span>
                         </span>
 
                         <span className="flex shrink-0 items-center gap-2">
                           <span className="text-sm font-bold text-[#171914]">
-                            {formatMoney(
-                              getInvoiceTotal(invoice)
-                            )}
+                            {formatMoney(getInvoiceTotal(invoice))}
                           </span>
 
                           {active && (
@@ -860,27 +809,22 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                     );
                   })}
 
-                  {!loading &&
-                    customerId &&
-                    filteredInvoices.length === 0 && (
-                      <div className="rounded-xl border border-dashed border-[#E6D9BD] bg-[#F9F6EE] px-4 py-8 text-center">
-                        <FileText
-                          size={25}
-                          className="mx-auto text-[#948A76]"
-                        />
+                  {!loading && customerId && filteredInvoices.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-[#E6D9BD] bg-[#F9F6EE] px-4 py-8 text-center">
+                      <FileText size={25} className="mx-auto text-[#948A76]" />
 
-                        <p className="mt-3 text-sm font-semibold text-[#171914]">
-                          No matching invoices
-                        </p>
+                      <p className="mt-3 text-sm font-semibold text-[#171914]">
+                        No matching invoices
+                      </p>
 
-                        <p className="mt-1 text-xs text-[#746D5E]">
-                          Try another invoice number or create a sale.
-                        </p>
-                      </div>
-                    )}
+                      <p className="mt-1 text-xs text-[#746D5E]">
+                        Try another invoice number or create a sale.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </section>
-                            {/* MESSAGE EDITOR */}
+              {/* MESSAGE EDITOR */}
 
               <section>
                 <label
@@ -893,17 +837,15 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                 <textarea
                   id="whatsapp-message"
                   value={message}
-                  onChange={(event) =>
-                    setMessage(event.target.value)
-                  }
+                  onChange={(event) => setMessage(event.target.value)}
                   rows={3}
                   placeholder="Write a personal message..."
                   className="w-full resize-y rounded-xl border border-[#E6D9BD] bg-[#F9F6EE] px-4 py-3 text-sm text-[#171914] outline-none transition placeholder:text-[#948A76] focus:border-[#D4AF37] focus:bg-white focus:ring-4 focus:ring-amber-100"
                 />
 
                 <p className="mt-1 text-xs text-[#746D5E]">
-                  This message is added to the invoice details
-                  before opening WhatsApp.
+                  This message is added to the invoice details before opening
+                  WhatsApp.
                 </p>
               </section>
 
@@ -935,10 +877,7 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                 <div className="p-4 sm:p-5">
                   {!selectedCustomer || !selectedInvoice ? (
                     <div className="rounded-xl border border-dashed border-[#D6E8D7] bg-white/70 p-6 text-center">
-                      <FileText
-                        size={25}
-                        className="mx-auto text-[#79947B]"
-                      />
+                      <FileText size={25} className="mx-auto text-[#79947B]" />
 
                       <p className="mt-3 text-sm font-semibold text-[#171914]">
                         Select a customer and invoice
@@ -992,9 +931,7 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                   <motion.button
                     type="button"
                     onClick={handleCopyMessage}
-                    disabled={
-                      !selectedCustomer || !selectedInvoice
-                    }
+                    disabled={!selectedCustomer || !selectedInvoice}
                     whileHover={{
                       y: -2,
                       scale: 1.02,
@@ -1012,11 +949,7 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                   <motion.button
                     type="button"
                     onClick={handleSendWhatsApp}
-                    disabled={
-                      !selectedCustomer ||
-                      !selectedInvoice ||
-                      loading
-                    }
+                    disabled={!selectedCustomer || !selectedInvoice || loading}
                     whileHover={{
                       y: -3,
                       scale: 1.02,
@@ -1053,11 +986,10 @@ className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
                 </h3>
 
                 <p className="mt-1 text-sm leading-6 text-[#746D5E]">
-                  This feature prepares an invoice message and
-                  opens WhatsApp. Review the customer number
-                  and message, then press Send in WhatsApp.
-                  It does not automatically attach a PDF invoice
-                  or send messages in the background.
+                  This feature prepares an invoice message and opens WhatsApp.
+                  Review the customer number and message, then press Send in
+                  WhatsApp. It does not automatically attach a PDF invoice or
+                  send messages in the background.
                 </p>
               </div>
             </div>
