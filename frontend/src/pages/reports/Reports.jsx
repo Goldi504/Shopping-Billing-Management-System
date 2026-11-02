@@ -1,8 +1,6 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  TrendingUp,
   IndianRupee,
   ShoppingBag,
   CreditCard,
@@ -17,6 +15,21 @@ import {
 import Sidebar from "../../components/layout/Sidebar";
 import api from "../../services/api";
 
+// ==========================================
+// THEME COLORS
+// ==========================================
+
+const PAGE_BG = "#F4F0E6";
+const CARD_BG = "#FFFEFA";
+const BORDER_COLOR = "#E6D9BD";
+const TEXT_COLOR = "#171914";
+const MUTED_COLOR = "#746D5E";
+const GOLD_COLOR = "#F4C64E";
+
+// ==========================================
+// FORMAT CURRENCY
+// ==========================================
+
 const money = (value) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -24,30 +37,59 @@ const money = (value) =>
     maximumFractionDigits: 0,
   }).format(Number(value) || 0);
 
+// ==========================================
+// FORMAT NUMBERS
+// ==========================================
+
 const number = (value) =>
   new Intl.NumberFormat("en-IN").format(Number(value) || 0);
+
+// ==========================================
+// SUMMARY STAT CARD
+// ==========================================
 
 function StatCard({ title, value, icon: Icon, color, index }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08 }}
+      transition={{
+        delay: index * 0.08,
+        duration: 0.35,
+      }}
       whileHover={{ y: -3 }}
-      className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
+      className="rounded-2xl border p-5 shadow-sm transition-shadow hover:shadow-md"
+      style={{
+        backgroundColor: CARD_BG,
+        borderColor: BORDER_COLOR,
+      }}
     >
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-gray-500">{title}</p>
+        <p
+          className="text-sm"
+          style={{ color: MUTED_COLOR }}
+        >
+          {title}
+        </p>
+
         <div className={`rounded-xl p-3 ${color}`}>
           <Icon size={20} />
         </div>
       </div>
-      <p className="mt-4 break-words text-2xl font-bold text-gray-900">
+
+      <p
+        className="mt-4 break-words text-2xl font-bold"
+        style={{ color: TEXT_COLOR }}
+      >
         {value}
       </p>
     </motion.div>
   );
 }
+
+// ==========================================
+// REPORTS COMPONENT
+// ==========================================
 
 function Reports() {
   const [summary, setSummary] = useState(null);
@@ -57,49 +99,68 @@ function Reports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // ========================================
+  // LOAD REPORT DATA
+  // ========================================
+
   const loadReports = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      // These requests use the existing dashboard and payment routes.
-      const [summaryResult, monthlyResult, paymentsResult] =
-        await Promise.allSettled([
-          api.get("/dashboard/summary"),
-          api.get("/dashboard/monthly-sales"),
-          api.get("/payments"),
-        ]);
+      const [
+        summaryResult,
+        monthlyResult,
+        paymentsResult,
+      ] = await Promise.allSettled([
+        api.get("/dashboard/summary"),
+        api.get("/dashboard/monthly-sales"),
+        api.get("/payments"),
+      ]);
 
+      // Summary data
       if (summaryResult.status === "fulfilled") {
         const data = summaryResult.value.data;
-        setSummary(data?.summary ?? data?.data ?? data);
+
+        setSummary(
+          data?.summary ?? data?.data ?? data
+        );
       } else {
         setSummary(null);
       }
 
+      // Monthly sales data
       if (monthlyResult.status === "fulfilled") {
         const data = monthlyResult.value.data;
+
         const list = Array.isArray(data)
           ? data
           : data?.monthlySales ??
             data?.sales ??
             data?.data ??
             [];
+
         setSales(Array.isArray(list) ? list : []);
       } else {
         setSales([]);
       }
 
+      // Payment data
       if (paymentsResult.status === "fulfilled") {
         const data = paymentsResult.value.data;
+
         const list = Array.isArray(data)
           ? data
-          : data?.payments ?? data?.data ?? [];
+          : data?.payments ??
+            data?.data ??
+            [];
+
         setPayments(Array.isArray(list) ? list : []);
       } else {
         setPayments([]);
       }
 
+      // Show an error only if every request fails
       if (
         summaryResult.status === "rejected" &&
         monthlyResult.status === "rejected" &&
@@ -109,16 +170,25 @@ function Reports() {
           "Could not load reports. Check your server connection and login status."
         );
       }
-    } catch {
+    } catch (err) {
+      console.error("Reports loading error:", err);
       setError("Unable to load reports.");
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // ========================================
+  // INITIAL LOAD
+  // ========================================
+
   useEffect(() => {
     loadReports();
   }, [loadReports]);
+
+  // ========================================
+  // GET AMOUNT
+  // ========================================
 
   const getAmount = (item) =>
     Number(
@@ -129,6 +199,10 @@ function Reports() {
         item?.total ??
         0
     );
+
+  // ========================================
+  // PAYMENT STATUS AND METHOD
+  // ========================================
 
   const getStatus = (payment) =>
     String(payment?.status ?? "").toLowerCase();
@@ -141,12 +215,20 @@ function Reports() {
         "Other"
     ).toLowerCase();
 
+  // ========================================
+  // TOTAL REVENUE
+  // ========================================
+
   const totalRevenue = Number(
     summary?.totalRevenue ??
       summary?.totalSales ??
       summary?.revenue ??
       0
   );
+
+  // ========================================
+  // TOTAL SALES
+  // ========================================
 
   const totalSales = Number(
     summary?.totalSalesCount ??
@@ -155,6 +237,9 @@ function Reports() {
       summary?.totalSales ??
       0
   );
+    // ========================================
+  // COMPLETED PAYMENTS
+  // ========================================
 
   const completedPayments = payments.filter((payment) =>
     ["completed", "paid", "success", "successful"].includes(
@@ -167,11 +252,21 @@ function Reports() {
     0
   );
 
+  // ========================================
+  // PAYMENT METHOD BREAKDOWN
+  // ========================================
+
   const paymentMethods = [
     { name: "Cash", keys: ["cash"] },
     { name: "UPI", keys: ["upi"] },
-    { name: "Card", keys: ["card", "credit card", "debit card"] },
-    { name: "Other", keys: ["other", "online", "bank transfer"] },
+    {
+      name: "Card",
+      keys: ["card", "credit card", "debit card"],
+    },
+    {
+      name: "Other",
+      keys: ["other", "online", "bank transfer"],
+    },
   ].map((method) => {
     const matching = completedPayments.filter((payment) =>
       method.keys.includes(getMethod(payment))
@@ -187,56 +282,80 @@ function Reports() {
     };
   });
 
+  // ========================================
+  // SALES CHART LABELS
+  // ========================================
+
   const getSaleLabel = (item, index) =>
-    item?.month ??
-    item?.label ??
-    item?.date ??
-    item?.name ??
-    `Item ${index + 1}`;
+    item?.month ||
+    item?.label ||
+    item?.name ||
+    item?.date ||
+    `Record ${index + 1}`;
 
-  const filteredSales = sales.slice(-(
-    period === "week" ? 7 : period === "year" ? 12 : 6
-  ));
+  // ========================================
+  // SALES CHART VALUES
+  // ========================================
 
-  const maxSale = Math.max(
-    1,
-    ...filteredSales.map((item) => getAmount(item))
-  );
+  const getSaleValue = (item) =>
+    Number(
+      item?.totalAmount ??
+        item?.totalSales ??
+        item?.revenue ??
+        item?.amount ??
+        item?.total ??
+        0
+    );
 
-  const exportCsv = () => {
+  // ========================================
+  // FILTER SALES BY PERIOD
+  // ========================================
+
+  const visibleSales =
+    period === "all"
+      ? sales
+      : sales.slice(-6);
+
+  // ========================================
+  // CSV EXPORT
+  // ========================================
+
+  const exportCSV = () => {
     const rows = [
-      ["Report", "Amount / Count"],
+      ["Report", "Value"],
       ["Total Revenue", totalRevenue],
-      ["Sales Count", totalSales],
+      ["Total Sales", totalSales],
       ["Completed Payments", completedPayments.length],
-      ["Completed Payment Amount", completedAmount],
+      ["Collected Payments", completedAmount],
       [],
-      ["Payment Method", "Transactions", "Amount"],
-      ...paymentMethods.map((method) => [
-        method.name,
-        method.count,
-        method.amount,
+      ["Sales Overview"],
+      ["Period", "Sales Amount"],
+      ...visibleSales.map((item, index) => [
+        getSaleLabel(item, index),
+        getSaleValue(item),
       ]),
       [],
-      ["Sales Period", "Amount"],
-      ...sales.map((item, index) => [
-        getSaleLabel(item, index),
-        getAmount(item),
+      ["Payment Breakdown"],
+      ["Payment Method", "Transactions", "Amount"],
+      ...paymentMethods.map((item) => [
+        item.name,
+        item.count,
+        item.amount,
       ]),
     ];
 
-    const csv = rows
+    const csvContent = rows
       .map((row) =>
         row
-          .map((cell) => {
-            const value = String(cell ?? "");
-            return `"${value.replace(/"/g, '""')}"`;
+          .map((value) => {
+            const text = String(value ?? "");
+            return `"${text.replace(/"/g, '""')}"`;
           })
           .join(",")
       )
       .join("\r\n");
 
-    const blob = new Blob([csv], {
+    const blob = new Blob(["\uFEFF" + csvContent], {
       type: "text/csv;charset=utf-8;",
     });
 
@@ -244,79 +363,123 @@ function Reports() {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = "ganesh-mobile-shop-report.csv";
+    link.download = "ganesh-mobile-shop-reports.csv";
+
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
   };
+    // ========================================
+  // REPORTS PAGE UI
+  // ========================================
 
   return (
-    <div className="min-h-screen w-full bg-[#f8f9fa] text-gray-900">
+    <div
+      className="min-h-screen w-full"
+      style={{
+        backgroundColor: PAGE_BG,
+        color: TEXT_COLOR,
+      }}
+    >
       <Sidebar />
 
-      <main className="min-h-screen min-w-0 p-4 pt-20 sm:p-6 sm:pt-20 lg:ml-[250px] lg:p-8">
-        <div className="mx-auto w-full max-w-[1600px]">
-          {/* Header */}
+      <main
+        className="min-h-screen px-4 py-6 sm:px-6 lg:ml-[250px] lg:px-8"
+        style={{ backgroundColor: PAGE_BG }}
+      >
+        <div className="mx-auto max-w-[1600px] space-y-6">
+
+          {/* PAGE HEADER */}
+
           <motion.header
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"
           >
             <div>
-              
-
-              <h1 className="text-2xl font-bold sm:text-3xl">
+              <h1 className="text-3xl font-extrabold tracking-tight text-[#171914]">
                 Reports
               </h1>
 
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-[#746D5E] sm:text-base">
                 Track sales, revenue, and payment activity.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <button
+              <motion.button
+                type="button"
                 onClick={loadReports}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold shadow-sm hover:border-amber-300 disabled:opacity-60"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold text-[#171914] shadow-sm transition hover:bg-[#FFF6D9] disabled:opacity-50"
+                style={{
+                  backgroundColor: CARD_BG,
+                  borderColor: BORDER_COLOR,
+                }}
               >
                 <RefreshCw
-                  size={16}
-                  className={loading ? "animate-spin" : ""}
+                  size={17}
+                  className={
+                    loading ? "animate-spin" : ""
+                  }
                 />
                 Refresh
-              </button>
+              </motion.button>
 
-              <button
-                onClick={exportCsv}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#f4c64e] px-4 py-3 text-sm font-bold text-gray-900 transition hover:bg-[#e9b933]"
+              <motion.button
+                type="button"
+                onClick={exportCSV}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-black shadow-sm transition hover:brightness-95"
+                style={{ backgroundColor: GOLD_COLOR }}
               >
-                <Download size={16} />
+                <Download size={17} />
                 Export CSV
-              </button>
+              </motion.button>
             </div>
           </motion.header>
 
+          {/* ERROR MESSAGE */}
+
           {error && (
-            <div className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              <AlertCircle size={18} className="mt-0.5 shrink-0" />
-              <p>{error}</p>
+            <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              <AlertCircle
+                size={19}
+                className="mt-0.5 shrink-0"
+              />
+
+              <p className="flex-1">{error}</p>
+
+              <button
+                type="button"
+                onClick={() => setError("")}
+                aria-label="Dismiss error"
+                className="font-bold"
+              >
+                ×
+              </button>
             </div>
           )}
 
-          {/* Summary cards */}
-          <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* SUMMARY CARDS */}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               title="Total Revenue"
-              value={loading ? "Loading..." : money(totalRevenue)}
+              value={money(totalRevenue)}
               icon={IndianRupee}
-              color="bg-blue-50 text-blue-700"
+              color="bg-blue-50 text-blue-600"
               index={0}
             />
 
             <StatCard
               title="Sales"
-              value={loading ? "Loading..." : number(totalSales)}
+              value={number(totalSales)}
               icon={ShoppingBag}
               color="bg-amber-50 text-amber-700"
               index={1}
@@ -324,159 +487,299 @@ function Reports() {
 
             <StatCard
               title="Completed Payments"
-              value={loading ? "Loading..." : number(completedPayments.length)}
+              value={number(completedPayments.length)}
               icon={CheckCircle2}
-              color="bg-green-50 text-green-700"
+              color="bg-green-50 text-green-600"
               index={2}
             />
 
             <StatCard
               title="Collected Payments"
-              value={loading ? "Loading..." : money(completedAmount)}
+              value={money(completedAmount)}
               icon={CreditCard}
-              color="bg-purple-50 text-purple-700"
+              color="bg-purple-50 text-purple-600"
               index={3}
             />
           </div>
 
-          {/* Sales chart */}
-          <section className="mb-6 overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* SALES OVERVIEW SECTION */}
+
+          <motion.section
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="overflow-hidden rounded-2xl border p-5 shadow-sm sm:p-6"
+            style={{
+              backgroundColor: CARD_BG,
+              borderColor: BORDER_COLOR,
+            }}
+          >
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
-                <h2 className="text-lg font-bold">Sales Overview</h2>
-                <p className="mt-1 text-sm text-gray-500">
+                <h2 className="text-lg font-bold text-[#171914]">
+                  Sales Overview
+                </h2>
+
+                <p className="mt-1 text-sm text-[#746D5E]">
                   Sales data returned by your dashboard API.
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 self-start rounded-xl border border-gray-200 px-3 py-2">
-                <CalendarDays size={16} className="text-gray-500" />
+              <div className="relative">
+                <CalendarDays
+                  size={17}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#746D5E]"
+                />
+
                 <select
                   value={period}
-                  onChange={(event) => setPeriod(event.target.value)}
-                  className="bg-transparent text-sm outline-none"
+                  onChange={(event) =>
+                    setPeriod(event.target.value)
+                  }
+                  className="w-full appearance-none rounded-xl border py-2.5 pl-10 pr-9 text-sm font-medium text-[#171914] outline-none focus:border-[#D4AF37] sm:w-auto"
+                  style={{
+                    backgroundColor: CARD_BG,
+                    borderColor: BORDER_COLOR,
+                  }}
                 >
-                  <option value="week">Recent 7 records</option>
-                  <option value="month">Recent 6 records</option>
-                  <option value="year">Recent 12 records</option>
+                  <option value="month">
+                    Recent 6 records
+                  </option>
+                  <option value="all">
+                    All records
+                  </option>
                 </select>
               </div>
             </div>
 
-            {filteredSales.length > 0 ? (
-              <div className="flex h-64 items-end gap-3 overflow-x-auto border-b border-l border-gray-100 px-3 pt-5 sm:gap-5">
-                {filteredSales.map((item, index) => {
-                  const amount = getAmount(item);
-                  const height = Math.max(
-                    5,
-                    (amount / maxSale) * 100
-                  );
+            {/* CHART AREA — PART 4 CONTINUES HERE */}
+                        {/* SALES CHART AREA */}
 
-                  return (
-                    <div
-                      key={`${getSaleLabel(item, index)}-${index}`}
-                      className="flex h-full min-w-[42px] flex-1 flex-col items-center justify-end gap-2"
-                    >
-                      <span className="whitespace-nowrap text-[10px] text-gray-500 sm:text-xs">
-                        {money(amount)}
-                      </span>
+            <div
+              className="mt-6 min-h-[240px] rounded-2xl p-5 sm:p-6"
+              style={{ backgroundColor: "#F8F5ED" }}
+            >
+              {loading ? (
+                <div className="flex min-h-[200px] flex-col items-center justify-center gap-3">
+                  <RefreshCw
+                    size={28}
+                    className="animate-spin text-[#B58B16]"
+                  />
 
-                      <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: `${height}%` }}
-                        transition={{
-                          duration: 0.6,
-                          delay: index * 0.05,
-                        }}
-                        title={`${getSaleLabel(item, index)}: ${money(amount)}`}
-                        className="w-full max-w-12 rounded-t-lg bg-[#f4c64e] transition-colors hover:bg-amber-500"
-                      />
+                  <p className="text-sm text-[#746D5E]">
+                    Loading sales data...
+                  </p>
+                </div>
+              ) : visibleSales.length === 0 ? (
+                <div className="flex min-h-[200px] flex-col items-center justify-center text-center">
+                  <BarChart3
+                    size={34}
+                    className="text-[#B9B5AA]"
+                  />
 
-                      <span className="max-w-16 truncate text-[10px] text-gray-500 sm:text-xs">
-                        {getSaleLabel(item, index)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex min-h-56 flex-col items-center justify-center rounded-xl bg-gray-50 px-4 text-center">
-                <BarChart3 size={34} className="mb-3 text-gray-300" />
-                <p className="font-semibold text-gray-700">
-                  No sales chart data available
-                </p>
-                <p className="mt-1 max-w-md text-sm text-gray-500">
-                  The monthly-sales endpoint may return a different
-                  data format, or no sales have been recorded yet.
-                </p>
-              </div>
-            )}
-          </section>
+                  <h3 className="mt-4 font-semibold text-[#171914]">
+                    No sales chart data available
+                  </h3>
 
-          {/* Payment breakdown */}
-          <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-            <div className="border-b border-gray-100 p-5 sm:p-6">
-              <h2 className="text-lg font-bold">
+                  <p className="mt-1 max-w-md text-sm text-[#746D5E]">
+                    The monthly-sales endpoint may return a
+                    different data format, or no sales have
+                    been recorded yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {visibleSales.map((item, index) => {
+                    const value = getSaleValue(item);
+
+                    const maxValue = Math.max(
+                      ...visibleSales.map(getSaleValue),
+                      1
+                    );
+
+                    const width = Math.max(
+                      (value / maxValue) * 100,
+                      value > 0 ? 3 : 0
+                    );
+
+                    return (
+                      <div
+                        key={
+                          item?._id ||
+                          item?.id ||
+                          `${getSaleLabel(item, index)}-${index}`
+                        }
+                      >
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <span className="truncate text-sm font-medium text-[#746D5E]">
+                            {getSaleLabel(item, index)}
+                          </span>
+
+                          <span className="shrink-0 text-sm font-bold text-[#171914]">
+                            {money(value)}
+                          </span>
+                        </div>
+
+                        <div className="h-3 overflow-hidden rounded-full bg-[#E9E1CF]">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${width}%` }}
+                            transition={{
+                              duration: 0.65,
+                              delay: index * 0.06,
+                            }}
+                            className="h-full rounded-full"
+                            style={{
+                              backgroundColor: GOLD_COLOR,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </motion.section>
+
+          {/* PAYMENT BREAKDOWN */}
+
+          <motion.section
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="overflow-hidden rounded-2xl border p-5 shadow-sm sm:p-6"
+            style={{
+              backgroundColor: CARD_BG,
+              borderColor: BORDER_COLOR,
+            }}
+          >
+            <div className="mb-5">
+              <h2 className="text-lg font-bold text-[#171914]">
                 Payment Breakdown
               </h2>
-              <p className="mt-1 text-sm text-gray-500">
+
+              <p className="mt-1 text-sm text-[#746D5E]">
                 Completed payments grouped by payment method.
               </p>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[520px] text-left text-sm">
-                <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-                  <tr>
-                    <th className="px-5 py-4 font-semibold">
-                      Payment Method
-                    </th>
-                    <th className="px-5 py-4 font-semibold">
-                      Transactions
-                    </th>
-                    <th className="px-5 py-4 text-right font-semibold">
-                      Total Amount
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-gray-100">
-                  {paymentMethods.map((method) => (
+            {loading ? (
+              <div className="flex min-h-[120px] items-center justify-center gap-2 text-sm text-[#746D5E]">
+                <RefreshCw
+                  size={18}
+                  className="animate-spin"
+                />
+                Loading payment data...
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[520px] border-collapse text-left">
+                  <thead>
                     <tr
-                      key={method.name}
-                      className="transition hover:bg-gray-50"
+                      style={{
+                        backgroundColor: "#F5F0E4",
+                      }}
                     >
-                      <td className="px-5 py-4 font-semibold">
-                        {method.name}
+                      <th className="rounded-l-lg px-4 py-3 text-xs font-bold uppercase tracking-wide text-[#746D5E]">
+                        Payment Method
+                      </th>
+
+                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-[#746D5E]">
+                        Transactions
+                      </th>
+
+                      <th className="rounded-r-lg px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-[#746D5E]">
+                        Amount Collected
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {paymentMethods.map((item) => (
+                      <tr
+                        key={item.name}
+                        className="border-b last:border-b-0"
+                        style={{
+                          borderColor: "#EEE5D2",
+                        }}
+                      >
+                        <td className="px-4 py-4 text-sm font-semibold text-[#171914]">
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className="h-2.5 w-2.5 rounded-full"
+                              style={{
+                                backgroundColor: GOLD_COLOR,
+                              }}
+                            />
+
+                            {item.name}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-4 text-sm text-[#746D5E]">
+                          {number(item.count)}
+                        </td>
+
+                        <td className="px-4 py-4 text-right text-sm font-bold text-[#171914]">
+                          {money(item.amount)}
+                        </td>
+                      </tr>
+                    ))}
+
+                    {paymentMethods.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={3}
+                          className="px-4 py-8 text-center text-sm text-[#746D5E]"
+                        >
+                          No payment data available.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+
+                  <tfoot>
+                    <tr
+                      style={{
+                        backgroundColor: "#FFF6D9",
+                      }}
+                    >
+                      <td className="rounded-l-lg px-4 py-3 text-sm font-bold text-[#171914]">
+                        Total
                       </td>
-                      <td className="px-5 py-4 text-gray-600">
-                        {number(method.count)}
+
+                      <td className="px-4 py-3 text-sm font-bold text-[#171914]">
+                        {number(
+                          paymentMethods.reduce(
+                            (total, item) =>
+                              total + item.count,
+                            0
+                          )
+                        )}
                       </td>
-                      <td className="px-5 py-4 text-right font-semibold">
-                        {money(method.amount)}
+
+                      <td className="rounded-r-lg px-4 py-3 text-right text-sm font-bold text-[#171914]">
+                        {money(completedAmount)}
                       </td>
                     </tr>
-                  ))}
-                </tbody>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+          </motion.section>
 
-                <tfoot className="bg-amber-50/60">
-                  <tr>
-                    <td className="px-5 py-4 font-bold">Total</td>
-                    <td className="px-5 py-4 font-bold">
-                      {number(completedPayments.length)}
-                    </td>
-                    <td className="px-5 py-4 text-right font-bold">
-                      {money(completedAmount)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </section>
+          {/* FOOTER NOTE */}
 
-          <p className="mt-6 text-center text-xs text-gray-400">
-            Ganesh Mobile Shop · Reports & Analytics
-          </p>
+          <div className="flex flex-col justify-between gap-2 pb-4 text-xs text-[#746D5E] sm:flex-row">
+            <p>
+              Ganesh Mobile Shop · Reports
+            </p>
+
+            <p>
+              Figures are based on the data returned by your APIs.
+            </p>
+          </div>
         </div>
       </main>
     </div>

@@ -481,22 +481,19 @@ function WhatsApp() {
   // ================================================
 
   return (
-    <div
-      className="min-h-screen w-full text-[#171914]"
-      style={{ backgroundColor: PAGE_BG }}
-    >
-      <Sidebar />
+<div
+  className="min-h-screen w-full text-[#171914]"
+  style={{ backgroundColor: "#F4F0E6" }}
+>      <Sidebar />
 
-      <main
-        className="min-h-screen px-4 py-6 sm:px-6 lg:ml-[250px] lg:px-8"
-        style={{ backgroundColor: PAGE_BG }}
-      >
-        <motion.div
+<main
+  className="min-h-screen px-4 py-6 sm:px-6 lg:ml-[250px] lg:px-8"
+  style={{ backgroundColor: "#F4F0E6" }}
+>        <motion.div
           variants={pageAnimation}
           initial="hidden"
           animate="visible"
-          className="mx-auto max-w-[1600px] space-y-6"
-        >
+className="mx-auto min-h-screen max-w-[1600px] space-y-6"        >
           {/* PAGE HEADER */}
 
           <motion.header
